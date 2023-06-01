@@ -1,136 +1,91 @@
-import "./App.css";
-import { useState, useEffect } from "react";
-import Papa from "papaparse";
-import axios from "axios";
-import { FaSpinner } from "react-icons/fa";
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC--6Fm8xQWEOq6R2UofnDu3tfYNMoTRKc",
-  authDomain: "retention-rocket.firebaseapp.com",
-  projectId: "retention-rocket",
-  storageBucket: "retention-rocket.appspot.com",
-  messagingSenderId: "888724071778",
-  appId: "1:888724071778:web:52c6f683e3c2820b79383b",
-  measurementId: "G-CVDCYY7PW4"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+import React, { useState } from 'react';
+import axios from 'axios';
+import { FaSpinner } from 'react-icons/fa';
+import GooglePlacesAutocomplete from 'react-google-autocomplete';
 
 function App() {
-  const [parsedData, setParsedData] = useState([]);
-  const [tableRows, setTableRows] = useState([]);
-  const [values, setValues] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [quoteDates, setQuoteDates] = useState([]);
+  const [quoteDate, setQuoteDate] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [zipCode, setZipCode] = useState('');
 
-  useEffect(() => {
-    const sendAPIRequests = async () => {
-      setIsLoading(true);
+  const submitRequest = async () => {
+    setIsLoading(true);
 
-      // Send API requests for each item in the parsed data with a delay
-      const delay = 5000; // Delay between each request in milliseconds
-      const quoteDates = [];
+    const formattedBirthDay = new Date(birthDay).toLocaleDateString('en-US');
 
-      for (let i = 0; i < values.length; i++) {
-        const item = values[i];
-        const { firstName, lastName, emailAddress, birthDay, zipCode } = item;
-        const requestBody = { firstName, lastName, emailAddress, birthDay, zipCode };
-
-        try {
-          const response = await axios.post("http://localhost:3000/api/scrape", requestBody);
-          const { quoteDate } = response.data;
-          console.log("Quote Date:", quoteDate);
-          quoteDates.push(quoteDate || "No Recent Quotes"); // Use "No Recent Quotes" if quoteDate is null
-        } catch (error) {
-          console.error("API Error:", error);
-          // Handle the error
-          quoteDates.push("");
-        }
-
-        // Delay before sending the next request
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-
-      setIsLoading(false);
-      setQuoteDates(quoteDates);
+    const requestBody = {
+      firstName: firstName,
+      lastName: lastName,
+      emailAddress: emailAddress,
+      birthDay: formattedBirthDay,
+      zipCode: zipCode
     };
 
-    if (parsedData.length > 0) {
-      sendAPIRequests();
-      console.log("Parsed Data:", parsedData);
+    try {
+      const response = await axios.post('http://localhost:3000/api/scrape', requestBody);
+      const { quoteDate } = response.data;
+      console.log('Quote Date:', quoteDate);
+      setQuoteDate(quoteDate || 'No Recent Quotes');
+    } catch (error) {
+      console.error('API Error:', error);
+      // Handle the error
+      setQuoteDate('');
     }
-  }, [parsedData, values]);
 
-  const changeHandler = (event) => {
-    Papa.parse(event.target.files[0], {
-      header: true,
-      skipEmptyLines: true,
-      complete: function (results) {
-        const rowsArray = [];
-        const valuesArray = [];
-
-        results.data.forEach((d) => {
-          rowsArray.push(Object.keys(d));
-          valuesArray.push(d); // Add the whole object to valuesArray
-        });
-
-        setParsedData(results.data);
-        setTableRows(rowsArray[0]);
-        setValues(valuesArray);
-        setQuoteDates([]);
-      },
-    });
+    setIsLoading(false);
   };
 
   return (
     <div>
-      <h1>Retention Booster</h1> {/* Added title */}
-      <h2>Please upload your customer list csv below:</h2> {/* Added subtitle */}
+      <h1>Retention Booster</h1>
+      <h2>Please enter the customer details below:</h2>
       <input
-        type="file"
-        name="file"
-        onChange={changeHandler}
-        accept=".csv"
-        style={{ display: "block", margin: "10px auto" }}
+        type="text"
+        name="firstName"
+        placeholder="First Name"
+        onChange={(e) => setFirstName(e.target.value)}
       />
-      <br />
-      <br />
+      <input
+        type="text"
+        name="lastName"
+        placeholder="Last Name"
+        onChange={(e) => setLastName(e.target.value)}
+      />
+      <input
+        type="text"
+        name="emailAddress"
+        placeholder="Email Address"
+        onChange={(e) => setEmailAddress(e.target.value)}
+      />
+      <input
+        type="date"
+        name="birthDay"
+        onChange={(e) => setBirthDay(e.target.value)}
+      />
+      <GooglePlacesAutocomplete
+        apiKey="AIzaSyD54kLmgAJK3ZRfTCIrL-ya_ZgtAz_dul0"
+        autocompletionRequest={{
+          types: ['geocode']
+        }}
+        
+        placeholder="Enter Mailing Address"
+        onSelect={(data) => setZipCode(data.postcode || '')}
+      />
+      <button onClick={submitRequest}>Submit</button>
+
       {isLoading ? (
         <div className="loading-spinner">
           <FaSpinner className="spin" />
         </div>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              {tableRows.map((rows, index) => {
-                return <th key={index}>{rows}</th>;
-              })}
-              <th>Quote Date</th> {/* Added new column */}
-            </tr>
-          </thead>
-          <tbody>
-            {values.map((value, index) => {
-              return (
-                <tr key={index}>
-                  {Object.values(value).map((val, i) => {
-                    return <td key={i}>{val}</td>;
-                  })}
-                  <td>{quoteDates[index]}</td> {/* Display quote date */}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div>
+          {quoteDate && <p>Quote Date: {quoteDate}</p>}
+          {!quoteDate && <p>No Recent Quotes</p>}
+        </div>
       )}
     </div>
   );
