@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FaSpinner } from 'react-icons/fa';
 import ReactMapboxAutocomplete from 'react-mapbox-autocomplete';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  // State variables
   const [isLoading, setIsLoading] = useState(false);
   const [quoteDate, setQuoteDate] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -12,55 +13,79 @@ function App() {
   const [emailAddress, setEmailAddress] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [serverResponses, setServerResponses] = useState([]);
+  const [showResponses, setShowResponses] = useState(false); // New state variable
 
-  // Submit form request
-  const submitRequest = async () => {
+  const submitRequest = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
+    setShowResponses(false); // Hide the mt-4 element
 
-    // Format birthDay as a localized string
-    const formattedBirthDay = new Date(birthDay).toISOString();
+    const birthDayRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!birthDayRegex.test(birthDay)) {
+      toast.error('Invalid birthDay format');
+      setIsLoading(false);
+      return;
+    }
 
-    // Create the request body
     const requestBody = {
       firstName: firstName,
       lastName: lastName,
       emailAddress: emailAddress,
-      birthDay: formattedBirthDay,
+      birthDay: birthDay,
       zipCode: zipCode
     };
 
     try {
-      // Send a POST request to the API endpoint
       const response = await axios.post('http://localhost:3000/api/scrape', requestBody);
-      const { quoteDate } = response.data;
-      console.log('Quote Date:', quoteDate);
-      setQuoteDate(quoteDate || 'No Recent Quotes');
-    } catch (error) {
-      console.error('API Error:', error);
-      // Handle the error
-      setQuoteDate('');
-    }
+      const { firstName, lastName, quoteCount } = response.data;
 
+      console.log('First Name:', firstName);
+      console.log('Last Name:', lastName);
+      console.log('Quote Count:', quoteCount);
+      setQuoteDate(quoteCount);
+
+   // Update serverResponses state with the new response
+   setServerResponses([response.data]); // Replace previous responses with current response
+   setShowResponses(true); // Set showResponses to true
+ } catch (error) {
+   console.error('API Error:', error);
+   setQuoteDate('');
+   // Update serverResponses state with the error response
+   setServerResponses([{ error: error.message }]); // Replace previous responses with error response
+   setShowResponses(true); // Set showResponses to true
+ }
     setIsLoading(false);
   };
 
-  // Handle address selection
+  const resetForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmailAddress('');
+    setBirthDay('');
+    setZipCode('');
+    setServerResponses([]);
+    setShowResponses(false); // Hide the mt-4 element
+    window.location.reload();
+  };
+
+  
+  
+
   const handleAddressSelect = (address) => {
     const parts = address.split(',');
     const extractedZipCode = parts[parts.length - 2].trim();
-    const filteredZipCode = extractedZipCode.replace(/\D/g, ''); // Remove non-numeric characters
+    const filteredZipCode = extractedZipCode.replace(/\D/g, '');
     setZipCode(filteredZipCode);
   };
 
-  // JSX markup for the component's UI
   return (
     <div className="container mt-5">
-      <h1 className="text-center">Retention Booster</h1>
+      <h1 className="text-center">Retention Rocket</h1>
       <div className="row justify-content-center">
         <div className="col-md-6">
-          <form>
-            <div className="form-group">
-              <label>First Name</label>
+          <form onSubmit={submitRequest}>
+            <div className="form-group mb-3">
               <input
                 type="text"
                 className="form-control"
@@ -69,8 +94,7 @@ function App() {
                 onChange={(e) => setFirstName(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label>Last Name</label>
+            <div className="form-group mb-3">
               <input
                 type="text"
                 className="form-control"
@@ -79,8 +103,7 @@ function App() {
                 onChange={(e) => setLastName(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label>Email Address</label>
+            <div className="form-group mb-3">
               <input
                 type="text"
                 className="form-control"
@@ -89,17 +112,16 @@ function App() {
                 onChange={(e) => setEmailAddress(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label>Birth Day</label>
+            <div className="form-group mb-3">
               <input
-                type="date"
+                type="text"
                 className="form-control"
+                placeholder="Enter Birthday: MM/DD/YYYY"
                 value={birthDay}
                 onChange={(e) => setBirthDay(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label>Mailing Address</label>
+            <div className="form-group mb-3">
               <ReactMapboxAutocomplete
                 publicKey="pk.eyJ1IjoiYmxlbnR6IiwiYSI6ImNsaWRnaWVseTBzMzczZm1tM2xiNXhueHYifQ.J7YBQwEc9rEuycuW_8Nb8w"
                 inputClass="form-control"
@@ -109,34 +131,53 @@ function App() {
                 placeholder="Enter Mailing Address"
               />
             </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={submitRequest}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
-                  Loading...
-                </>
-              ) : (
-                'Submit'
-              )}
-            </button>
-          </form>
-          {quoteDate && (
-            <div className="mt-4">
-              <p className="text-center">Quote Date: {quoteDate}</p>
+            <div className="d-flex justify-content-between">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <FaSpinner className="mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  'Submit'
+                )}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={resetForm}
+              >
+                Reset
+              </button>
             </div>
-          )}
-          {!quoteDate && (
+          </form>
+          {showResponses && ( // Conditionally render the mt-4 element
             <div className="mt-4">
-              <p className="text-center">No Recent Quotes</p>
+              {/* Conditional rendering of server responses */}
+              {serverResponses.length > 0 ? (
+                serverResponses.map((response, index) => (
+                  <p key={index} className="text-center">
+                    {response.error ? (
+                      <span>Error: {response.error}</span>
+                    ) : (
+                      <>
+                        Quotes in the last 30 days: {response.quoteDate}
+                      </>
+                    )}
+                  </p>
+                ))
+              ) : (
+                <p className="text-center">No Responses</p>
+              )}
             </div>
           )}
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
