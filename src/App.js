@@ -40,7 +40,7 @@ function App() {
     };
 
     try {
-      const response = await axios.post('http://localhost:3000/api/scrape', requestBody);
+      const response = await axios.post('http://45.79.149.34:3000/api/scrape', requestBody);
       const { firstName, lastName, quoteCount } = response.data;
 
       console.log('First Name:', firstName);
@@ -182,6 +182,17 @@ function App() {
         </div>
       </div>
       <ToastContainer />
+      <div className="disclaimer mt-4">
+        <h3>Tips and Tricks:</h3>
+        <ul>
+          <li>Retention Rocket is in Beta and is free while more features are being added.</li>
+          <li>After clicking submit,it may take up to a full minute to get a response.</li>
+          <li>Please enter the birth date in the format MM/DD/YYYY</li>
+          <li>The car insurance quotes returned are from the last 30-45 days.</li>
+          <li>Retention Rocket cannot detect if your client has shopped with smaller regional carriers.</li>
+          <li>We suggest you shop for car insurance quotes yourself and then input your information for testing.</li>
+        </ul>
+      </div>
     </div>
   );
   
