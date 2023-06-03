@@ -6,6 +6,40 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
+
+  // Assuming you have stored the user's email in a variable called 'userEmail'
+
+fetch('https://retentionrocket.io/version-test/api/1.1/obj/user', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer 7110e1ddc17fa082988046b912ac4cc6', // Replace with your Bubble.io API key
+  },
+  body: JSON.stringify({
+    constraints: [
+      {
+        key: 'email',
+        constraint_type: 'equals',
+        value: email,
+      },
+    ],
+  }),
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle the response data from Bubble.io
+    if (data.length > 0) {
+      // User account exists, handle accordingly
+    } else {
+      // User account does not exist, handle accordingly
+    }
+  })
+  .catch(error => {
+    // Handle any errors that occurred during the request
+  });
+
+
+
   const [isLoading, setIsLoading] = useState(false);
   const [quoteDate, setQuoteDate] = useState('');
   const [firstName, setFirstName] = useState('');
