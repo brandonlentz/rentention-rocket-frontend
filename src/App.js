@@ -4,6 +4,7 @@ import { FaSpinner } from 'react-icons/fa';
 import ReactMapboxAutocomplete from 'react-mapbox-autocomplete';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import rocketLogo from './images/rocket-logo.png';
 
 function App() {
 
@@ -83,9 +84,11 @@ function App() {
 
   return (
     <div className="container mt-5">
-      <h1 className="text-center">Retention Rocket</h1>
       <div className="row justify-content-center">
         <div className="col-md-6">
+          <div className="logo-container">
+            <img src={rocketLogo} alt="Retention Rocket" />
+          </div>
           <form onSubmit={submitRequest}>
             <div className="form-group mb-3">
               <input
@@ -157,9 +160,8 @@ function App() {
               </button>
             </div>
           </form>
-          {showResponses && ( // Conditionally render the mt-4 element
+          {showResponses && (
             <div className="mt-4">
-              {/* Conditional rendering of server responses */}
               {serverResponses.length > 0 ? (
                 serverResponses.map((response, index) => (
                   <p key={index} className="text-center">
@@ -182,6 +184,7 @@ function App() {
       <ToastContainer />
     </div>
   );
+  
 }
 
 export default App;
