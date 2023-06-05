@@ -40,7 +40,7 @@ function App() {
     };
 
     try {
-      const response = await axios.post('http://45.79.149.34:3000/api/scrape', requestBody);
+      const response = await axios.post('https://45.79.149.34:3000/api/scrape', requestBody);
       const { firstName, lastName, quoteCount } = response.data;
 
       console.log('First Name:', firstName);
